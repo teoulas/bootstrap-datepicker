@@ -801,6 +801,47 @@
 			return this;
 		},
 
+    // Copy of update, but only to update the datepicker UI without triggering
+    // any change events. Does not accept any arguments.
+    updateFromInput: function(){
+			var oldDates = this.dates.copy(),
+				dates = [],
+				fromArgs = false;
+
+      dates = this.isInput
+          ? this.element.val()
+          : this.element.data('date') || this.inputField.val();
+      if (dates && this.o.multidate)
+        dates = dates.split(this.o.multidateSeparator);
+      else
+        dates = [dates];
+      delete this.element.data().date;
+
+			dates = $.map(dates, $.proxy(function(date){
+				return DPGlobal.parseDate(date, this.o.format, this.o.language, this.o.assumeNearbyYear);
+			}, this));
+			dates = $.grep(dates, $.proxy(function(date){
+				return (
+					!this.dateWithinRange(date) ||
+					!date
+				);
+			}, this), true);
+			this.dates.replace(dates);
+
+			if (this.dates.length)
+				this.viewDate = new Date(this.dates.get(-1));
+			else if (this.viewDate < this.o.startDate)
+				this.viewDate = new Date(this.o.startDate);
+			else if (this.viewDate > this.o.endDate)
+				this.viewDate = new Date(this.o.endDate);
+			else
+				this.viewDate = this.o.defaultViewDate;
+
+      this._trigger('changeDate');
+      this.fill();
+      return this;
+    },
+
 		fillDow: function(){
 			var dowCnt = this.o.weekStart,
 				html = '<tr>';
